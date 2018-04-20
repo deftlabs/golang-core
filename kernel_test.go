@@ -16,21 +16,21 @@
 
 package dlshared
 
-
 import (
-	"testing"
 	"labix.org/v2/mgo/bson"
+	"testing"
 )
 
 type testKernelInjectStruct1 struct {
 	Logger
-	Configuration *Configuration
-	Kernel *Kernel
+	Configuration   *Configuration
+	Kernel          *Kernel
 	MongoDataSource `dlinject:"MongoTestDb,test,testKernelCollection"`
-	Struct2 *testKernelInjectStruct2 `dlinject:"testKernelInjectStruct2"`
+	Struct2         *testKernelInjectStruct2 `dlinject:"testKernelInjectStruct2"`
 }
 
-type testKernelInjectStruct2 struct { methodCalled bool }
+type testKernelInjectStruct2 struct{ methodCalled bool }
+
 func (self *testKernelInjectStruct2) call() { self.methodCalled = true }
 
 func TestKernelInject(t *testing.T) {
@@ -41,30 +41,51 @@ func TestKernelInject(t *testing.T) {
 		kernel.AddComponent("testKernelInjectStruct2", &testKernelInjectStruct2{})
 	})
 
-	if err != nil { t.Errorf("TestKernelInject start kernel is broken:", err); return }
+	if err != nil {
+		t.Errorf("TestKernelInject start kernel is broken:", err)
+		return
+	}
 
 	struct1 := kernel.GetComponent("testKernelInjectStruct1").(*testKernelInjectStruct1)
 
-	if struct1.Struct2 == nil { t.Errorf("TestKernelInject is broken - component not injected"); return }
+	if struct1.Struct2 == nil {
+		t.Errorf("TestKernelInject is broken - component not injected")
+		return
+	}
 
 	struct1.Struct2.call()
 
-	if struct1.Kernel == nil { t.Errorf("TestKernelInject is broken - did not inject the kernel component"); return }
-	if struct1.Kernel.Configuration == nil { t.Errorf("TestKernelInject is broken - did not inject the kernel component"); return }
+	if struct1.Kernel == nil {
+		t.Errorf("TestKernelInject is broken - did not inject the kernel component")
+		return
+	}
+	if struct1.Kernel.Configuration == nil {
+		t.Errorf("TestKernelInject is broken - did not inject the kernel component")
+		return
+	}
 
-	if !struct1.Struct2.methodCalled { t.Errorf("TestKernelInject is broken - method not called on struct"); return }
-
-	if struct1.Logf == nil { t.Errorf("TestKernelInject is broken - logger not injected"); return }
+	if !struct1.Struct2.methodCalled {
+		t.Errorf("TestKernelInject is broken - method not called on struct")
+		return
+	}
 
 	struct1.Logf(Debug, "This is a test - don't panic")
 
-	if struct1.Configuration == nil { t.Errorf("TestKernelInject is broken - configuration not injected"); return }
+	if struct1.Configuration == nil {
+		t.Errorf("TestKernelInject is broken - configuration not injected")
+		return
+	}
 
-	if val := struct1.Configuration.String("environment", ""); len(val) == 0 { t.Errorf("TestKernelInject is broken - configuration is not working"); }
+	if val := struct1.Configuration.String("environment", ""); len(val) == 0 {
+		t.Errorf("TestKernelInject is broken - configuration is not working")
+	}
 
 	// Verify the db connection
-	if err := struct1.InsertSafe(&bson.M{ "_id": struct1.NewObjectId()}); err != nil { t.Errorf("TestKernelInject is broken - ds inject not working"); }
+	if err := struct1.InsertSafe(&bson.M{"_id": struct1.NewObjectId()}); err != nil {
+		t.Errorf("TestKernelInject is broken - ds inject not working")
+	}
 
-	if err := kernel.Stop(); err != nil { t.Errorf("TestKernelInject stop kernel is broken:", err) }
+	if err := kernel.Stop(); err != nil {
+		t.Errorf("TestKernelInject stop kernel is broken:", err)
+	}
 }
-
